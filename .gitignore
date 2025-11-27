@@ -6,3 +6,6 @@ terraform/terraform.tfstate.backup
 
 # Sensitive values
 terraform/terraform.tfvars
+
+# Other files
+.DS_Store

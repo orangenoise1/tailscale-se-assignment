@@ -10,6 +10,9 @@ This repo spins up a small AWS lab environment for the Tailscale SE take-home as
 Everything is deployed using Terraform so you can bring it up or tear it down quickly and repeatably.  
 I used a separate throwaway tailnet for this exercise to keep it isolated from my personal environment.
 
+## Tailnet Name
+Tailnet used for this deployment: **orangenoise@gmail.com**
+
 ## Prerequisites
 
 AWS Requirements
