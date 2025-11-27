@@ -1,0 +1,6 @@
+aws_region          = "us-west-2"
+project_name        = "robbriggs-se-takehome"
+
+# Auth keys from Tailscale Admin Console
+subnet_router_authkey = "tskey-auth-xxxxxxxxxxxxxxx"
+ssh_node_authkey      = "tskey-auth-yyyyyyyyyyyyyyy"
