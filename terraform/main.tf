@@ -22,7 +22,7 @@ locals {
   private_subnet_cidr = "10.0.1.16/28"
 }
 
-# --- Networking ---
+# Networking
 
 resource "aws_vpc" "vpc" {
   cidr_block           = local.vpc_cidr
@@ -146,7 +146,7 @@ resource "aws_security_group" "nodes" {
   }
 }
 
-# --- AMI lookup (Amazon Linux 2023) ---
+# AMI lookup
 
 data "aws_ami" "amazon_linux" {
   most_recent = true
@@ -159,7 +159,7 @@ data "aws_ami" "amazon_linux" {
   }
 }
 
-# --- Subnet router instance ---
+# Subnet router instance
 
 resource "aws_instance" "subnet_router" {
   ami           = data.aws_ami.amazon_linux.id
@@ -175,11 +175,10 @@ resource "aws_instance" "subnet_router" {
     Name = "${var.project_name}-subnet-router"
   }
 
-  user_data = <<-BOOTSTRAP
+  user_data = <<-EOF
 #!/bin/bash
 
-# Basic updates (best-effort)
-dnf -y update || yum -y update || true
+dnf -y update
 
 # Enable IP forwarding so this instance can route traffic for the VPC
 cat <<SYSCTL >/etc/sysctl.d/99-tailscale.conf
@@ -198,10 +197,10 @@ tailscale up \
   --hostname="${var.project_name}-subnet-router" \
   --advertise-routes=${local.vpc_cidr} \
   --accept-dns=true
-BOOTSTRAP
+EOF
 }
 
-# --- SSH node instance (Tailscale SSH) ---
+# SSH node instance
 
 resource "aws_instance" "ssh_node" {
   ami           = data.aws_ami.amazon_linux.id
@@ -216,10 +215,10 @@ resource "aws_instance" "ssh_node" {
     Name = "${var.project_name}-ssh-node"
   }
 
-  user_data = <<-BOOTSTRAP
+  user_data = <<-EOF
 #!/bin/bash
 
-dnf -y update || yum -y update || true
+dnf -y update
 
 curl -fsSL https://tailscale.com/install.sh | sh
 systemctl enable --now tailscaled
@@ -230,5 +229,5 @@ tailscale up \
   --hostname="${var.project_name}-ssh-node" \
   --ssh=true \
   --accept-dns=true
-BOOTSTRAP
+EOF
 }
