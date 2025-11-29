@@ -2,7 +2,7 @@
 
 This repo spins up a small AWS lab environment for the Tailscale SE take-home assignment:
 
-- A throwaway AWS VPC (`10.0.1.0/24`) with private and public subnets
+- An AWS VPC with private and public subnets
 - A NAT Gateway on the public subnet for egress traffic to internet
 - An EC2 instance acting as a Tailscale subnet router
 - A second EC2 instance joined to the same tailnet with Tailscale SSH enabled
@@ -30,12 +30,12 @@ Local Tools Required
 
 ## What This Builds
 
-Subnet router instance (`<project_name>-subnet-router`)
+Subnet router instance
 - EC2 instance in a private subnet (no public IP)
-- Runs Tailscale and advertises `10.0.1.0/24`
-- IP forwarding enabled and `source_dest_check = false` so it can route VPC traffic
+- Runs Tailscale and advertises VPC CIDR 10.0.1.0/24
+- IP forwarding is enabled, and AWS source_dest_check is disabled, allowing the instance to route traffic within the VPC
 
-Tailscale SSH node instance (`<project_name>-ssh-node`)
+Tailscale SSH node instance
 - EC2 instance in the same private subnet (no public IP)
 - Joins the tailnet with Tailscale SSH enabled
 - Reachable via Tailscale SSH directly, and reachable by ICMP through the subnet router when targeting its private IP
@@ -45,7 +45,7 @@ Tailscale doesn’t need any inbound security group rules. I only allowed ICMP w
 
 ## Automating Subnet Route Approval (How I’d Do It in a Real Deployment)
 
-For this lab, I manually approve the `10.0.1.0/24` subnet route in the Tailscale admin console after deployment.  
+For this lab, I manually approve the 10.0.1.0/24 subnet route in the Tailscale admin console after deployment.  
 This keeps the exercise simple and avoids requiring any extra setup for the reviewer.
 
 In a real customer environment, I would automate this with Tailscale ACLs using auto-approvers. That way, specific tagged nodes are allowed to advertise and auto-approve routes without manual intervention.
