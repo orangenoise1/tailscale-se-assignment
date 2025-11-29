@@ -58,4 +58,4 @@ Confirm both EC2 instances joined the tailnet | Run `tailscale status` — you s
 Approve the subnet route | In the Tailscale admin console, open the subnet router and approve the route `10.0.1.0/24`
 Ping the subnet router’s private IP | Run `ping <subnet_router_private_ip>` — should succeed once the route is approved. Optionally, run the same command **before** approval to show it fails without the route.
 Ping the SSH node’s private IP (via subnet router) | Run `ping <ssh_node_private_ip>` — should respond once the route is approved. ICMP is allowed within the VPC security group, so this confirms traffic is being routed through the subnet router.
-SSH into the SSH node using Tailscale SSH | Run `ssh ec2-user@<project_name>-ssh-node` — should connect using Tailscale SSH (first connection may prompt browser-based auth)
+SSH into the SSH node using Tailscale SSH | Run `ssh root@<project_name>-ssh-node` — should connect using Tailscale SSH (first connection will prompt browser-based auth)
