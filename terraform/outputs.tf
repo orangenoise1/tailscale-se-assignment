@@ -25,5 +25,5 @@ output "step_4_ping_ssh_node_after" {
 # 5. SSH into the Tailscale SSH-enabled node
 output "step_5_tailscale_ssh" {
   description = "Step 5: SSH into the SSH node using Tailscale SSH."
-  value       = "ssh ec2-user@${var.project_name}-ssh-node"
+  value       = "ssh root@${var.project_name}-ssh-node"
 }
