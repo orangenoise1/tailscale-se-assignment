@@ -6,6 +6,16 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.0"
     }
+
+    tls = {
+      source  = "hashicorp/tls"
+      version = "~> 4.0"
+    }
+
+    local = {
+      source  = "hashicorp/local"
+      version = "~> 2.0"
+    }
   }
 }
 
@@ -20,6 +30,24 @@ locals {
   # Carve out two small subnets inside the VPC
   public_subnet_cidr  = "10.0.1.0/28"
   private_subnet_cidr = "10.0.1.16/28"
+}
+
+# Generate key pair for Windows instance
+
+resource "tls_private_key" "windows_key" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
+
+resource "aws_key_pair" "windows" {
+  key_name   = "${var.project_name}-windows-key"
+  public_key = tls_private_key.windows_key.public_key_openssh
+}
+
+resource "local_file" "windows_private_key" {
+  filename        = "/Users/orangenoise/Downloads/${var.project_name}-windows-key.pem"
+  content         = tls_private_key.windows_key.private_key_pem
+  file_permission = "0400"
 }
 
 # Networking
@@ -118,7 +146,7 @@ resource "aws_route_table_association" "private" {
   route_table_id = aws_route_table.private.id
 }
 
-# Security group: ICMP within VPC + all egress
+# Security group: ICMP within VPC + RDP + all egress
 resource "aws_security_group" "nodes" {
   name        = "${var.project_name}-nodes-sg"
   description = "Security group for Tailscale lab nodes"
@@ -130,6 +158,15 @@ resource "aws_security_group" "nodes" {
     from_port   = -1
     to_port     = -1
     protocol    = "icmp"
+    cidr_blocks = [local.vpc_cidr]
+  }
+
+  # Allow RDP from within the VPC to Windows instances
+  ingress {
+    description = "Allow RDP within VPC"
+    from_port   = 3389
+    to_port     = 3389
+    protocol    = "tcp"
     cidr_blocks = [local.vpc_cidr]
   }
 
@@ -146,7 +183,7 @@ resource "aws_security_group" "nodes" {
   }
 }
 
-# AMI lookup
+# AMI lookup - Amazon Linux
 
 data "aws_ami" "amazon_linux" {
   most_recent = true
@@ -156,6 +193,24 @@ data "aws_ami" "amazon_linux" {
   filter {
     name   = "name"
     values = ["al2023-ami-*-x86_64"]
+  }
+}
+
+# AMI lookup - Windows Server
+
+data "aws_ami" "windows_server" {
+  most_recent = true
+
+  owners = ["amazon"]
+
+  filter {
+    name   = "name"
+    values = ["Windows_Server-2022-English-Full-Base-*"]
+  }
+
+  filter {
+    name   = "platform"
+    values = ["windows"]
   }
 }
 
@@ -230,4 +285,24 @@ tailscale up \
   --ssh=true \
   --accept-dns=true
 EOF
+}
+
+# Windows Server node for RDP
+
+resource "aws_instance" "windows_node" {
+  ami           = data.aws_ami.windows_server.id
+  instance_type = "t3.large"
+
+  subnet_id              = aws_subnet.private.id
+  vpc_security_group_ids = [aws_security_group.nodes.id]
+
+  # Keep it private; access via subnet/Tailscale
+  associate_public_ip_address = false
+
+  # Use the already generated key pair
+  key_name = aws_key_pair.windows.key_name
+
+  tags = {
+    Name = "${var.project_name}-windows-node"
+  }
 }
